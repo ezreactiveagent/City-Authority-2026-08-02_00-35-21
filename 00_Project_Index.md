@@ -40,6 +40,8 @@ Lists deferred systems, unresolved implementation questions, later-game ideas, a
 
 Defines the minimum playable city — one region, one Mayor, five departments, one emergency, one court case, one media outlet, one developer dispute, and a complete accountability report — as a concrete build target, with explicit scope boundaries and a suggested build order.
 
+**Implementation status:** all seven build-order steps (08 §14, amended by 11 §2-§3) are complete — Slice v0 (11 §5) is playable end to end via the `EmergencyDebugPanel` in `Assets/Scenes/SampleScene.unity`. See `CLAUDE.md`'s "Current status" section for the step-by-step code map. Save/load reproducibility (08 §13 item 8) remains deferred to slice v1.
+
 ### [09 — Service Coverage and Response Model](09_Service_Coverage_and_Response_Model.md)
 
 Proposes first-pass numeric defaults for travel-time bands, coverage-state resolution, response-time severity multipliers, and cross-station exposure, scoped to unblock the vertical slice's emergency system.
