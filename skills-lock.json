@@ -12,6 +12,12 @@
       "sourceType": "github",
       "skillPath": "plugins/game-development/skills/unity-ecs-patterns/SKILL.md",
       "computedHash": "e54a4f529fada156d3d82e42dcfc76674913eea9fb0bb292ca0323f8866c6ce9"
+    },
+    "unity-initial-setup": {
+      "source": "IvanMurzak/Unity-MCP",
+      "sourceType": "github",
+      "skillPath": "Unity-MCP-Plugin/.claude/skills/unity-initial-setup/SKILL.md",
+      "computedHash": "04e8180a8bd7c30a8af16108b2cf1e9cd44705e66bfc464b343a89f42ad69834"
     }
   }
 }
