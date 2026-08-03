@@ -62,6 +62,8 @@ These were explicitly treated as possible later additions.
 
 - Judicial recusal
 - Formal post-incident reports as a routine system
+
+  **A one-off, generated-on-demand version (not a routine, ongoing system) is implemented for the vertical slice's single scenario — see [08 §10](08_Vertical_Slice_Specification.md#10-failure-and-accountability-report), built as `FinalReportGenerator` (CLAUDE.md's Step 7). Historical archiving (01 §7) and a repeatable/routine reporting system remain deferred.**
 - Forced condemnation outside immediate emergency danger
 - Negotiation and counteroffers for development proposals
 - Detailed media bias selection during proposal approval
@@ -83,6 +85,8 @@ The design direction exists, but implementation needs numeric tuning.
 - Weight of critical infrastructure
 - Population displacement thresholds
 - Difficulty scaling
+
+**Full destruction math above remains open. A narrower scenario-scoped pass/fail substitute — tied to whether the vertical slice's one emergency's life-safety threat was contained, per [08 §10](08_Vertical_Slice_Specification.md#10-failure-and-accountability-report) — is implemented as `ScenarioOutcomeResolver` (CLAUDE.md's Step 7).**
 
 ### Service Coverage
 
@@ -230,7 +234,7 @@ Choose the minimum playable city containing:
 - One developer dispute
 - A complete failure and accountability report
 
-**Resolved in [08 — Vertical Slice Specification](08_Vertical_Slice_Specification.md).**
+**Resolved in [08 — Vertical Slice Specification](08_Vertical_Slice_Specification.md), amended by [11 — Vertical Slice Implementation Approach](11_Vertical_Slice_Implementation_Approach.md). Implementation is now complete — all seven build-order steps (08 §14, amended by 11 §2-§3) are built and Slice v0 (11 §5) is playable end to end; see `CLAUDE.md`'s "Current status" section for the step-by-step code map.**
 
 ## 6. Recommended Next Question
 
