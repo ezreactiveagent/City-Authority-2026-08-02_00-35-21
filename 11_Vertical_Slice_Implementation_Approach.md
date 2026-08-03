@@ -73,6 +73,8 @@ This does not resolve [07 §5E](07_Open_Decisions_and_Expansion_Backlog.md)'s "C
 6. Generate two newspaper stories (via templates, per Section 3) referencing the emergency and the ruling.
 7. Reach a pass/fail scenario end state and generate an accountability report covering all of the above.
 
+**Slice v0 is complete — all seven items above are implemented (build order Steps 1–7 per [08 §14](08_Vertical_Slice_Specification.md#14-suggested-build-order), amended by Section 2 above) and verified via EditMode tests plus a live run through the `EmergencyDebugPanel`. Item 7 landed as `ScenarioOutcomeResolver` and `FinalReportGenerator` in `Assets/Scripts/CityAuthority/Report/` — see `CLAUDE.md`'s "Current status" section for the full step-by-step code map.**
+
 **Slice v1 (deferred) — item 8:**
 
 8. Reload a save made mid-scenario and confirm the court ruling and any other stored decisions do not change.
