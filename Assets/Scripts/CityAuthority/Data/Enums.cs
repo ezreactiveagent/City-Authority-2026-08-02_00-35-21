@@ -73,4 +73,15 @@ namespace CityAuthority.Data
         Acknowledge,
         Ignore
     }
+
+    // 03 §6, 05 §13: the categories the final incident/accountability record distinguishes.
+    public enum AccountabilityCategory
+    {
+        IgnoredWarning,
+        AcknowledgedUnresolved,
+        ActionAttempted,
+        ActionCompleted,
+        RecommendationFollowed,
+        RecommendationRejected
+    }
 }

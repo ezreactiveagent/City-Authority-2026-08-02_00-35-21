@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using CityAuthority.Accountability;
 using CityAuthority.Data;
 
 namespace CityAuthority.Emergency
@@ -41,14 +42,16 @@ namespace CityAuthority.Emergency
         public Notification RaiseWarning()
         {
             warningRaised = true;
-            recorder.Record(new AccountabilityEvent("EmergencyWarningRaised", definition.WarningMessage, definition.TargetDistrict));
+            recorder.Record(new AccountabilityEvent(
+                "EmergencyWarningRaised", definition.WarningMessage, definition.TargetDistrict, NotificationLevel.Warning));
             return new Notification(NotificationLevel.Warning, definition.WarningMessage, definition.TargetDistrict);
         }
 
         public Notification EscalateToCritical()
         {
             criticalRaised = true;
-            recorder.Record(new AccountabilityEvent("EmergencyCriticalRaised", definition.CriticalMessage, definition.TargetDistrict));
+            recorder.Record(new AccountabilityEvent(
+                "EmergencyCriticalRaised", definition.CriticalMessage, definition.TargetDistrict, NotificationLevel.Critical));
             return new Notification(NotificationLevel.Critical, definition.CriticalMessage, definition.TargetDistrict);
         }
 
@@ -59,7 +62,9 @@ namespace CityAuthority.Emergency
             recorder.Record(new AccountabilityEvent(
                 "AcknowledgedUnresolved",
                 $"{level} notification for {definition.TargetDistrict.DisplayName} acknowledged but not resolved.",
-                definition.TargetDistrict));
+                definition.TargetDistrict,
+                level,
+                AccountabilityCategory.AcknowledgedUnresolved));
         }
 
         public void RecordIgnore(NotificationLevel level)
@@ -67,7 +72,9 @@ namespace CityAuthority.Emergency
             recorder.Record(new AccountabilityEvent(
                 "IgnoredWarning",
                 $"{level} notification for {definition.TargetDistrict.DisplayName} was ignored.",
-                definition.TargetDistrict));
+                definition.TargetDistrict,
+                level,
+                AccountabilityCategory.IgnoredWarning));
         }
 
         // Act → dispatch the responding department's unit, resolve the target
@@ -83,7 +90,9 @@ namespace CityAuthority.Emergency
             recorder.Record(new AccountabilityEvent(
                 "ActionTaken",
                 $"Responded to {level} notification for {definition.TargetDistrict.DisplayName} by dispatching {definition.RespondingDepartment.DisplayName}.",
-                definition.TargetDistrict));
+                definition.TargetDistrict,
+                level,
+                AccountabilityCategory.ActionCompleted));
 
             var department = definition.RespondingDepartment;
             var travelToTarget = CoverageResolver.FindBaseTravelTime(department, definition.TargetDistrict);
@@ -99,7 +108,8 @@ namespace CityAuthority.Emergency
             recorder.Record(new AccountabilityEvent(
                 "DispatchResolved",
                 $"{department.DisplayName} arrived at {definition.TargetDistrict.DisplayName}: {targetCoverage} coverage, {severityMultiplier}x severity multiplier.",
-                definition.TargetDistrict));
+                definition.TargetDistrict,
+                level));
 
             var secondaryNotifications = new List<Notification>();
             foreach (var district in allDistricts)

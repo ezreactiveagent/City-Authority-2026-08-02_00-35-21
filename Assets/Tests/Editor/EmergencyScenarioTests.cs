@@ -1,3 +1,4 @@
+using CityAuthority.Accountability;
 using CityAuthority.Data;
 using CityAuthority.Emergency;
 using NUnit.Framework;
@@ -74,9 +75,9 @@ namespace CityAuthority.Tests.Editor
             var scenario = slice.EmergencyScenario;
             var incident = scenario.Incident;
             var fireState = new DepartmentCoverageState(incident.RespondingDepartment);
-            var recorder = new InMemoryAccountabilityRecorder();
+            var cityLog = new CityLog();
 
-            var runtime = new EmergencyIncidentRuntime(incident, fireState, scenario.Districts, slice.CitywideTravelTimeBands, recorder);
+            var runtime = new EmergencyIncidentRuntime(incident, fireState, scenario.Districts, slice.CitywideTravelTimeBands, cityLog);
 
             var warning = runtime.RaiseWarning();
             Assert.AreEqual(NotificationLevel.Warning, warning.Level);
@@ -97,30 +98,31 @@ namespace CityAuthority.Tests.Editor
             }
 
             // 08 §13 item 3: at least one Warning and one Critical notification.
-            Assert.IsTrue(recorder.Events.Count >= 4, "Warning, Critical, Act, and dispatch-resolved events must all be recorded");
+            Assert.IsTrue(cityLog.Events.Count >= 4, "Warning, Critical, Act, and dispatch-resolved events must all be recorded");
         }
 
         [Test]
-        public void Respond_RecordsDistinctAccountabilityOutcomesPerResponseType()
+        public void Respond_RecordsDistinctAccountabilityCategoriesPerResponseType()
         {
             var slice = LoadSlice();
             var scenario = slice.EmergencyScenario;
             var incident = scenario.Incident;
 
-            var ignoreRecorder = new InMemoryAccountabilityRecorder();
-            new EmergencyIncidentRuntime(incident, new DepartmentCoverageState(incident.RespondingDepartment), scenario.Districts, slice.CitywideTravelTimeBands, ignoreRecorder)
+            var ignoreLog = new CityLog();
+            new EmergencyIncidentRuntime(incident, new DepartmentCoverageState(incident.RespondingDepartment), scenario.Districts, slice.CitywideTravelTimeBands, ignoreLog)
                 .RecordIgnore(NotificationLevel.Warning);
-            Assert.AreEqual("IgnoredWarning", ignoreRecorder.Events[0].EventType);
+            Assert.AreEqual(AccountabilityCategory.IgnoredWarning, ignoreLog.Events[0].Category);
+            Assert.AreEqual(NotificationLevel.Warning, ignoreLog.Events[0].RelatedLevel);
 
-            var ackRecorder = new InMemoryAccountabilityRecorder();
-            new EmergencyIncidentRuntime(incident, new DepartmentCoverageState(incident.RespondingDepartment), scenario.Districts, slice.CitywideTravelTimeBands, ackRecorder)
+            var ackLog = new CityLog();
+            new EmergencyIncidentRuntime(incident, new DepartmentCoverageState(incident.RespondingDepartment), scenario.Districts, slice.CitywideTravelTimeBands, ackLog)
                 .RecordAcknowledge(NotificationLevel.Warning);
-            Assert.AreEqual("AcknowledgedUnresolved", ackRecorder.Events[0].EventType);
+            Assert.AreEqual(AccountabilityCategory.AcknowledgedUnresolved, ackLog.Events[0].Category);
 
-            var actRecorder = new InMemoryAccountabilityRecorder();
-            new EmergencyIncidentRuntime(incident, new DepartmentCoverageState(incident.RespondingDepartment), scenario.Districts, slice.CitywideTravelTimeBands, actRecorder)
+            var actLog = new CityLog();
+            new EmergencyIncidentRuntime(incident, new DepartmentCoverageState(incident.RespondingDepartment), scenario.Districts, slice.CitywideTravelTimeBands, actLog)
                 .RecordActAndDispatch(NotificationLevel.Warning);
-            Assert.AreEqual("ActionTaken", actRecorder.Events[0].EventType);
+            Assert.AreEqual(AccountabilityCategory.ActionCompleted, actLog.Events[0].Category);
         }
     }
 }

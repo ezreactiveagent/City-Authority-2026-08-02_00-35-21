@@ -1,4 +1,5 @@
 using System.Text;
+using CityAuthority.Accountability;
 using CityAuthority.Data;
 using CityAuthority.Emergency;
 using UnityEngine;
@@ -13,17 +14,17 @@ namespace CityAuthority.DebugUI
 
         private EmergencyIncidentRuntime runtime;
         private DepartmentCoverageState fireState;
-        private InMemoryAccountabilityRecorder recorder;
+        private CityLog cityLog;
         private Notification currentWarning;
         private Notification currentCritical;
         private bool warningResponded;
         private bool criticalResponded;
         private DispatchResult dispatchResult;
         private Vector2 logScroll;
-        private Rect windowRect = new(20, 20, 440, 560);
+        private Rect windowRect = new(20, 20, 440, 620);
 
         public DispatchResult LastDispatchResult => dispatchResult;
-        public System.Collections.Generic.IReadOnlyList<AccountabilityEvent> Events => recorder?.Events;
+        public System.Collections.Generic.IReadOnlyList<AccountabilityEvent> Events => cityLog?.Events;
 
         private void Awake()
         {
@@ -36,13 +37,13 @@ namespace CityAuthority.DebugUI
 
             var incident = sliceConfig.EmergencyScenario.Incident;
             fireState = new DepartmentCoverageState(incident.RespondingDepartment);
-            recorder = new InMemoryAccountabilityRecorder();
+            cityLog = new CityLog();
             runtime = new EmergencyIncidentRuntime(
                 incident,
                 fireState,
                 sliceConfig.EmergencyScenario.Districts,
                 sliceConfig.CitywideTravelTimeBands,
-                recorder);
+                cityLog);
         }
 
         public void RaiseWarningNow()
@@ -166,12 +167,23 @@ namespace CityAuthority.DebugUI
             }
 
             GUILayout.Space(10);
-            GUILayout.Label("Accountability log (" + recorder.Events.Count + ")");
+            GUILayout.Label("By category: " +
+                "Ignored=" + cityLog.CountByCategory(AccountabilityCategory.IgnoredWarning) +
+                ", Acknowledged (unresolved)=" + cityLog.CountByCategory(AccountabilityCategory.AcknowledgedUnresolved) +
+                ", Actions completed=" + cityLog.CountByCategory(AccountabilityCategory.ActionCompleted));
+
+            GUILayout.Space(6);
+            GUILayout.Label("City Log (" + cityLog.Events.Count + ")");
             logScroll = GUILayout.BeginScrollView(logScroll, GUILayout.Height(160));
             var sb = new StringBuilder();
-            foreach (var evt in recorder.Events)
+            foreach (var evt in cityLog.Events)
             {
-                sb.Append('[').Append(evt.EventType).Append("] ").Append(evt.Summary).Append('\n');
+                sb.Append('[').Append(evt.EventType);
+                if (evt.Category.HasValue)
+                {
+                    sb.Append('/').Append(evt.Category.Value);
+                }
+                sb.Append("] ").Append(evt.Summary).Append('\n');
             }
             GUILayout.Label(sb.ToString());
             GUILayout.EndScrollView();
