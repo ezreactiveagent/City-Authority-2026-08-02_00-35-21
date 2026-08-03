@@ -1,5 +1,6 @@
 using System.Text;
 using CityAuthority.Accountability;
+using CityAuthority.Court;
 using CityAuthority.Data;
 using CityAuthority.Emergency;
 using UnityEngine;
@@ -20,10 +21,13 @@ namespace CityAuthority.DebugUI
         private bool warningResponded;
         private bool criticalResponded;
         private DispatchResult dispatchResult;
+        private CondemnationCaseRuntime courtCase;
+        private bool structureCondemned;
         private Vector2 logScroll;
-        private Rect windowRect = new(20, 20, 440, 620);
+        private Rect windowRect = new(20, 20, 440, 700);
 
         public DispatchResult LastDispatchResult => dispatchResult;
+        public CourtRulingRecord LastRuling => courtCase?.Ruling;
         public System.Collections.Generic.IReadOnlyList<AccountabilityEvent> Events => cityLog?.Events;
 
         private void Awake()
@@ -44,6 +48,32 @@ namespace CityAuthority.DebugUI
                 sliceConfig.EmergencyScenario.Districts,
                 sliceConfig.CitywideTravelTimeBands,
                 cityLog);
+
+            if (sliceConfig.CourtCase != null)
+            {
+                courtCase = new CondemnationCaseRuntime(sliceConfig.CourtCase, cityLog);
+            }
+        }
+
+        // 02 §13: the Emergency Commander condemns the structure once the
+        // life-safety threat is confirmed, without prior player approval.
+        public void CondemnStructure()
+        {
+            if (structureCondemned)
+            {
+                return;
+            }
+
+            structureCondemned = true;
+            cityLog.Record(new AccountabilityEvent(
+                "StructureCondemned",
+                $"{sliceConfig.CourtCase.DisplayName} condemned by emergency order; payment responsibility disputed in Court.",
+                sliceConfig.CourtCase.TargetDistrict));
+        }
+
+        public CourtRulingRecord IssueRuling()
+        {
+            return courtCase.IssueRuling();
         }
 
         public void RaiseWarningNow()
@@ -166,6 +196,11 @@ namespace CityAuthority.DebugUI
                 }
             }
 
+            if (courtCase != null)
+            {
+                DrawCourtCaseSection();
+            }
+
             GUILayout.Space(10);
             GUILayout.Label("By category: " +
                 "Ignored=" + cityLog.CountByCategory(AccountabilityCategory.IgnoredWarning) +
@@ -189,6 +224,53 @@ namespace CityAuthority.DebugUI
             GUILayout.EndScrollView();
 
             GUI.DragWindow();
+        }
+
+        private void DrawCourtCaseSection()
+        {
+            var courtCaseDefinition = sliceConfig.CourtCase;
+
+            GUILayout.Space(10);
+            GUILayout.Label("Court Case", EditorBoldLabel());
+
+            if (!runtime.CriticalRaised || !sliceConfig.EmergencyScenario.Incident.LifeSafetyRisk)
+            {
+                GUILayout.Label("(No condemnation grounds yet.)");
+                return;
+            }
+
+            if (!structureCondemned)
+            {
+                if (GUILayout.Button("Condemn Structure & Open Court Case"))
+                {
+                    CondemnStructure();
+                }
+                return;
+            }
+
+            GUILayout.Label(courtCaseDefinition.DisplayName + " — assessed value $" + courtCaseDefinition.AssessedValue.ToString("N0"));
+            GUILayout.Label("Judge: " + courtCaseDefinition.AssignedJudge.JudgeName + " (" + courtCaseDefinition.AssignedJudge.PersonalityTag + ")");
+
+            GUILayout.Label("Claimants:");
+            foreach (var claimant in courtCaseDefinition.Claimants)
+            {
+                GUILayout.Label("  " + claimant.CitizenName + " (" + claimant.HousingStatus + ")");
+            }
+
+            if (!courtCase.HasRuling)
+            {
+                if (GUILayout.Button("Issue Ruling"))
+                {
+                    IssueRuling();
+                }
+                return;
+            }
+
+            var ruling = courtCase.Ruling;
+            GUILayout.Space(4);
+            GUILayout.Label("Ruling: " + ruling.SelectedOutcome);
+            GUILayout.Label("City pays $" + ruling.CityAmount.ToString("N0") + ", Owner pays $" + ruling.OwnerAmount.ToString("N0"));
+            GUILayout.Label(ruling.Explanation, GUI.skin.box);
         }
 
         private static void DrawResponseButtons(System.Action<PlayerResponseType> respond)

@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ae05889a18cf4322831637ea03f7e16, type: 3}
+  m_Name: Citizen_PriyaNair
+  m_EditorClassIdentifier: Assembly-CSharp::CityAuthority.Data.Citizen
+  citizenName: Priya Nair
+  residenceDistrict: {fileID: 11400000, guid: a5758610be8384040acbfc1ed131ba30, type: 2}
+  housingStatus: 1
+  satisfaction: 35
+  trust: 40

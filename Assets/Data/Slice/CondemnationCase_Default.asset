@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b2059246fbcd4b4c8a4fb9ff2cf1fd5, type: 3}
+  m_Name: CondemnationCase_Default
+  m_EditorClassIdentifier: Assembly-CSharp::CityAuthority.Data.CondemnationCaseDefinition
+  id: condemnation-downtown-structure-fire
+  displayName: 'In re: Downtown Structure Fire Condemnation'
+  targetDistrict: {fileID: 11400000, guid: a5758610be8384040acbfc1ed131ba30, type: 2}
+  assessedValue: 180000
+  initialAssignmentOutcome: 1
+  initialAssignmentSplitIncrement: 0
+  claimants:
+  - {fileID: 11400000, guid: 2f9c3b6ab2d484879861d5362c568bf5, type: 2}
+  - {fileID: 11400000, guid: bc28dc0c4ec844645989094d71548cfa, type: 2}
+  assignedJudge: {fileID: 11400000, guid: 61ef287b528e5468da89fcf126094ce9, type: 2}

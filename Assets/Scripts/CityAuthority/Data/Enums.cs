@@ -84,4 +84,42 @@ namespace CityAuthority.Data
         RecommendationFollowed,
         RecommendationRejected
     }
+
+    // 04 §1 (via 11 §4): determines whether a resident is a claimant in the
+    // condemnation court case (02 §13) — owners are, renters are affected but not a party.
+    public enum HousingStatus
+    {
+        Owner,
+        Renter
+    }
+
+    // 10 §3: the four kinds of ruling for the emergency condemnation dispute.
+    // Split is parameterized by SplitIncrement rather than being three separate kinds.
+    public enum CourtOutcomeType
+    {
+        CityPays,
+        OwnerPays,
+        Split,
+        InitialAssignmentUpheld
+    }
+
+    // 10 §3: "three fixed increments only" — the City's share of the assessed value C.
+    public enum SplitIncrement
+    {
+        TwentyFive,
+        Fifty,
+        SeventyFive
+    }
+
+    // 06 §5: persistent judicial tendencies. Exact decision weights stay hidden
+    // from the player; this tag is what the deterministic ruling stub keys off of.
+    public enum JudgePersonalityTag
+    {
+        PublicSafetyFocused,
+        BusinessFriendly,
+        StrictProceduralist,
+        LiabilityCautious,
+        CityFriendly,
+        UnpredictableWithinLimits
+    }
 }
