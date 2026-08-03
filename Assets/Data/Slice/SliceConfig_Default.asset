@@ -24,3 +24,4 @@ MonoBehaviour:
   emergencyScenario: {fileID: 11400000, guid: fd7eda9df630744b6b22f424f6505410, type: 2}
   courtCase: {fileID: 11400000, guid: b1e847d9a11764920ac8b89a5a9b4d33, type: 2}
   developmentListing: {fileID: 11400000, guid: 612ac6243f3a54ddd8daf862118f3fc7, type: 2}
+  newspaper: {fileID: 11400000, guid: 2b300423d693e46bbafc67db83430bed, type: 2}

@@ -13,6 +13,7 @@ namespace CityAuthority.Data
         [SerializeField] private EmergencyScenarioConfig emergencyScenario;
         [SerializeField] private CondemnationCaseDefinition courtCase;
         [SerializeField] private DevelopmentListingDefinition developmentListing;
+        [SerializeField] private NewspaperOutlet newspaper;
 
         public RegionPreset Region => region;
         public MayorPersonality Mayor => mayor;
@@ -21,5 +22,6 @@ namespace CityAuthority.Data
         public EmergencyScenarioConfig EmergencyScenario => emergencyScenario;
         public CondemnationCaseDefinition CourtCase => courtCase;
         public DevelopmentListingDefinition DevelopmentListing => developmentListing;
+        public NewspaperOutlet Newspaper => newspaper;
     }
 }

@@ -4,6 +4,7 @@ using CityAuthority.Court;
 using CityAuthority.Data;
 using CityAuthority.Development;
 using CityAuthority.Emergency;
+using CityAuthority.Media;
 using UnityEngine;
 
 namespace CityAuthority.DebugUI
@@ -25,12 +26,14 @@ namespace CityAuthority.DebugUI
         private CondemnationCaseRuntime courtCase;
         private bool structureCondemned;
         private DevelopmentProposalCycleRuntime developmentCycle;
+        private NewspaperCoverageRuntime newspaper;
         private Vector2 logScroll;
-        private Rect windowRect = new(20, 20, 440, 780);
+        private Rect windowRect = new(20, 20, 440, 860);
 
         public DispatchResult LastDispatchResult => dispatchResult;
         public CourtRulingRecord LastRuling => courtCase?.Ruling;
         public DevelopmentProposalCycleRuntime DevelopmentCycle => developmentCycle;
+        public NewspaperCoverageRuntime Newspaper => newspaper;
         public System.Collections.Generic.IReadOnlyList<AccountabilityEvent> Events => cityLog?.Events;
 
         private void Awake()
@@ -61,6 +64,26 @@ namespace CityAuthority.DebugUI
             {
                 developmentCycle = new DevelopmentProposalCycleRuntime(sliceConfig.DevelopmentListing, cityLog);
             }
+
+            if (sliceConfig.Newspaper != null)
+            {
+                newspaper = new NewspaperCoverageRuntime(sliceConfig.Newspaper, cityLog);
+            }
+        }
+
+        public NewsArticle PublishEmergencyResponseStory()
+        {
+            return newspaper.PublishEmergencyResponseStory(sliceConfig.EmergencyScenario.Incident, dispatchResult);
+        }
+
+        public NewsArticle PublishCourtRulingStory()
+        {
+            return newspaper.PublishCourtRulingStory(sliceConfig.CourtCase, courtCase.Ruling);
+        }
+
+        public NewsArticle PublishDevelopmentRejectionStory()
+        {
+            return newspaper.PublishDevelopmentRejectionStory(sliceConfig.DevelopmentListing, developmentCycle.DeveloperInterestScore);
         }
 
         public void ApproveDevelopmentProposal(DevelopmentProposal proposal)
@@ -225,6 +248,11 @@ namespace CityAuthority.DebugUI
                 DrawCourtCaseSection();
             }
 
+            if (newspaper != null)
+            {
+                DrawNewspaperSection();
+            }
+
             GUILayout.Space(10);
             GUILayout.Label("By category: " +
                 "Ignored=" + cityLog.CountByCategory(AccountabilityCategory.IgnoredWarning) +
@@ -333,6 +361,55 @@ namespace CityAuthority.DebugUI
             GUILayout.Label("Ruling: " + ruling.SelectedOutcome);
             GUILayout.Label("City pays $" + ruling.CityAmount.ToString("N0") + ", Owner pays $" + ruling.OwnerAmount.ToString("N0"));
             GUILayout.Label(ruling.Explanation, GUI.skin.box);
+        }
+
+        private void DrawNewspaperSection()
+        {
+            GUILayout.Space(10);
+            GUILayout.Label(sliceConfig.Newspaper.DisplayName, EditorBoldLabel());
+
+            if (criticalResponded && FindArticle("EmergencyResponse") == null)
+            {
+                if (GUILayout.Button("Publish Emergency Response Story"))
+                {
+                    PublishEmergencyResponseStory();
+                }
+            }
+
+            if (courtCase != null && courtCase.HasRuling && FindArticle("CourtRuling") == null)
+            {
+                if (GUILayout.Button("Publish Court Ruling Story"))
+                {
+                    PublishCourtRulingStory();
+                }
+            }
+
+            if (developmentCycle != null && developmentCycle.WasRejected && FindArticle("DevelopmentRejection") == null)
+            {
+                if (GUILayout.Button("Publish Development Rejection Story"))
+                {
+                    PublishDevelopmentRejectionStory();
+                }
+            }
+
+            foreach (var article in newspaper.PublishedArticles)
+            {
+                GUILayout.Space(4);
+                GUILayout.Label(article.Headline, EditorBoldLabel());
+                GUILayout.Label(article.Body, GUI.skin.box);
+            }
+        }
+
+        private NewsArticle FindArticle(string sourceEventType)
+        {
+            foreach (var article in newspaper.PublishedArticles)
+            {
+                if (article.SourceEventType == sourceEventType)
+                {
+                    return article;
+                }
+            }
+            return null;
         }
 
         private static void DrawResponseButtons(System.Action<PlayerResponseType> respond)
