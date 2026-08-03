@@ -1,4 +1,3 @@
-using System.IO;
 using System.Text;
 using CityAuthority.Accountability;
 using CityAuthority.Court;
@@ -7,241 +6,79 @@ using CityAuthority.Development;
 using CityAuthority.Emergency;
 using CityAuthority.Media;
 using CityAuthority.Report;
-using CityAuthority.SaveLoad;
+using CityAuthority.Session;
 using UnityEngine;
 
 namespace CityAuthority.DebugUI
 {
-    // Bare-bones IMGUI panel for driving the Step 2 scripted emergency by hand in
+    // Bare-bones IMGUI panel for driving the scripted emergency by hand in
     // Play mode. No styling, no prefabs — a debugging aid, not a game screen.
+    // Reads/acts through a shared ScenarioSessionHost rather than owning its
+    // own scenario state, so it can run alongside the real UGUI menu without
+    // the two drifting out of sync.
     public sealed class EmergencyDebugPanel : MonoBehaviour
     {
-        [SerializeField] private SliceConfig sliceConfig;
+        [SerializeField] private ScenarioSessionHost sessionHost;
 
-        private EmergencyIncidentRuntime runtime;
-        private DepartmentCoverageState fireState;
-        private CityLog cityLog;
-        private Notification currentWarning;
-        private Notification currentCritical;
-        private bool warningResponded;
-        private bool criticalResponded;
-        private DispatchResult dispatchResult;
-        private CondemnationCaseRuntime courtCase;
-        private bool structureCondemned;
-        private DevelopmentProposalCycleRuntime developmentCycle;
-        private NewspaperCoverageRuntime newspaper;
-        private AccountabilityReport finalReport;
+        private ScenarioSession session;
         private Vector2 logScroll;
-        private Rect windowRect = new(20, 20, 440, 860);
+        private Rect windowRect = new(480, 20, 440, 860);
 
-        public DispatchResult LastDispatchResult => dispatchResult;
-        public CourtRulingRecord LastRuling => courtCase?.Ruling;
-        public DevelopmentProposalCycleRuntime DevelopmentCycle => developmentCycle;
-        public NewspaperCoverageRuntime Newspaper => newspaper;
-        public AccountabilityReport FinalReport => finalReport;
-        public System.Collections.Generic.IReadOnlyList<AccountabilityEvent> Events => cityLog?.Events;
+        public DispatchResult LastDispatchResult => session?.LastDispatchResult;
+        public CourtRulingRecord LastRuling => session?.CourtCase?.Ruling;
+        public DevelopmentProposalCycleRuntime DevelopmentCycle => session?.DevelopmentCycle;
+        public NewspaperCoverageRuntime Newspaper => session?.Newspaper;
+        public AccountabilityReport FinalReport => session?.FinalReport;
+        public System.Collections.Generic.IReadOnlyList<AccountabilityEvent> Events => session?.CityLog?.Events;
 
-        private void Awake()
+        // Start, not Awake: ScenarioSessionHost.Awake() is what constructs the
+        // shared Session, and Unity doesn't guarantee Awake order across
+        // different GameObjects — Start runs after every Awake in the scene.
+        private void Start()
         {
-            if (sliceConfig == null || sliceConfig.EmergencyScenario == null)
+            if (sessionHost == null || sessionHost.Session == null)
             {
-                Debug.LogError("EmergencyDebugPanel: SliceConfig with an EmergencyScenario must be assigned.");
+                Debug.LogError("EmergencyDebugPanel: a ScenarioSessionHost with a ready Session must be assigned.");
                 enabled = false;
                 return;
             }
 
-            var incident = sliceConfig.EmergencyScenario.Incident;
-            fireState = new DepartmentCoverageState(incident.RespondingDepartment);
-            cityLog = new CityLog();
-            runtime = new EmergencyIncidentRuntime(
-                incident,
-                fireState,
-                sliceConfig.EmergencyScenario.Districts,
-                sliceConfig.CitywideTravelTimeBands,
-                cityLog);
-
-            if (sliceConfig.CourtCase != null)
-            {
-                courtCase = new CondemnationCaseRuntime(sliceConfig.CourtCase, cityLog);
-            }
-
-            if (sliceConfig.DevelopmentListing != null)
-            {
-                developmentCycle = new DevelopmentProposalCycleRuntime(sliceConfig.DevelopmentListing, cityLog);
-            }
-
-            if (sliceConfig.Newspaper != null)
-            {
-                newspaper = new NewspaperCoverageRuntime(sliceConfig.Newspaper, cityLog);
-            }
+            session = sessionHost.Session;
         }
 
-        public NewsArticle PublishEmergencyResponseStory()
-        {
-            return newspaper.PublishEmergencyResponseStory(sliceConfig.EmergencyScenario.Incident, dispatchResult);
-        }
+        public NewsArticle PublishEmergencyResponseStory() => session.PublishEmergencyResponseStory();
 
-        public NewsArticle PublishCourtRulingStory()
-        {
-            return newspaper.PublishCourtRulingStory(sliceConfig.CourtCase, courtCase.Ruling);
-        }
+        public NewsArticle PublishCourtRulingStory() => session.PublishCourtRulingStory();
 
-        public NewsArticle PublishDevelopmentRejectionStory()
-        {
-            return newspaper.PublishDevelopmentRejectionStory(sliceConfig.DevelopmentListing, developmentCycle.DeveloperInterestScore);
-        }
+        public NewsArticle PublishDevelopmentRejectionStory() => session.PublishDevelopmentRejectionStory();
 
-        public void ApproveDevelopmentProposal(DevelopmentProposal proposal)
-        {
-            developmentCycle.ApproveProposal(proposal);
-        }
+        public void ApproveDevelopmentProposal(DevelopmentProposal proposal) => session.ApproveDevelopmentProposal(proposal);
 
-        public void RejectDevelopmentProposals()
-        {
-            developmentCycle.RejectBoth();
-        }
+        public void RejectDevelopmentProposals() => session.RejectDevelopmentProposals();
 
-        // 02 §13: the Emergency Commander condemns the structure once the
-        // life-safety threat is confirmed, without prior player approval.
-        public void CondemnStructure()
-        {
-            if (structureCondemned)
-            {
-                return;
-            }
+        public void CondemnStructure() => session.CondemnStructure();
 
-            structureCondemned = true;
-            cityLog.Record(new AccountabilityEvent(
-                "StructureCondemned",
-                $"{sliceConfig.CourtCase.DisplayName} condemned by emergency order; payment responsibility disputed in Court.",
-                sliceConfig.CourtCase.TargetDistrict));
-        }
+        public CourtRulingRecord IssueRuling() => session.IssueRuling();
 
-        public CourtRulingRecord IssueRuling()
-        {
-            return courtCase.IssueRuling();
-        }
+        public AccountabilityReport GenerateFinalReport() => session.GenerateFinalReport();
 
-        // 08 §10, 08 §13 item 7: assembled once, on demand, from the City Log
-        // plus whatever court ruling and newspaper coverage already exist —
-        // neither is required, since a scenario can end without the emergency
-        // ever escalating to condemnation or coverage.
-        public AccountabilityReport GenerateFinalReport()
-        {
-            if (finalReport != null)
-            {
-                return finalReport;
-            }
+        public bool HasSaveFile => session != null && session.HasSaveFile;
 
-            finalReport = ComputeFinalReport();
-            cityLog.Record(new AccountabilityEvent("FinalReportGenerated", $"Scenario ended: {finalReport.Outcome}. {finalReport.Summary}"));
-            return finalReport;
-        }
+        public void SaveScenario() => session.SaveScenario();
 
-        // Split out so LoadScenario can recompute the report after a reload
-        // without appending a second "FinalReportGenerated" log entry — the
-        // restored log already carries the original one. Pure function of
-        // already-restored data, so recomputing is safe (06 §9 only forbids
-        // re-generating the court ruling itself, not this read of it).
-        private AccountabilityReport ComputeFinalReport()
-        {
-            var incident = sliceConfig.EmergencyScenario.Incident;
-            var outcome = ScenarioOutcomeResolver.Resolve(incident, dispatchResult);
-            var ruling = courtCase?.Ruling;
-            var articles = newspaper?.PublishedArticles ?? System.Array.Empty<NewsArticle>();
-            return FinalReportGenerator.Generate(cityLog, outcome, ruling, articles);
-        }
+        public void LoadScenario() => session.LoadScenario();
 
-        // 08 §13 item 8: writes the full scenario state to disk as JSON.
-        private static string SavePath => Path.Combine(Application.persistentDataPath, "scenario_save.json");
+        public void RaiseWarningNow() => session.RaiseWarningNow();
 
-        public bool HasSaveFile => SaveFileIO.Exists(SavePath);
+        public void EscalateNow() => session.EscalateNow();
 
-        public void SaveScenario()
-        {
-            var data = ScenarioSaveService.Capture(
-                cityLog, runtime, fireState, warningResponded, criticalResponded, structureCondemned,
-                courtCase, developmentCycle, newspaper, finalReport != null);
-            SaveFileIO.Save(SavePath, data);
-        }
+        public void RespondToWarning(PlayerResponseType response) => session.RespondToWarning(response);
 
-        // Restores every runtime instance from the save file rather than
-        // mutating the existing ones in place — the court ruling, published
-        // articles, and log entries all come back as stored data, never
-        // re-simulated (06 §9).
-        public void LoadScenario()
-        {
-            if (!SaveFileIO.Exists(SavePath))
-            {
-                return;
-            }
-
-            var data = SaveFileIO.Load(SavePath);
-            var restored = ScenarioSaveService.Restore(data, sliceConfig);
-
-            cityLog = restored.CityLog;
-            fireState = restored.RespondingDepartmentState;
-            runtime = restored.EmergencyRuntime;
-            warningResponded = restored.WarningResponded;
-            criticalResponded = restored.CriticalResponded;
-            structureCondemned = restored.StructureCondemned;
-            courtCase = restored.CourtCase;
-            developmentCycle = restored.DevelopmentCycle;
-            newspaper = restored.Newspaper;
-            dispatchResult = runtime.DispatchResultIfAny;
-
-            var incident = sliceConfig.EmergencyScenario.Incident;
-            currentWarning = runtime.WarningRaised
-                ? new Notification(NotificationLevel.Warning, incident.WarningMessage, incident.TargetDistrict)
-                : null;
-            currentCritical = runtime.CriticalRaised
-                ? new Notification(NotificationLevel.Critical, incident.CriticalMessage, incident.TargetDistrict)
-                : null;
-
-            finalReport = restored.FinalReportGenerated ? ComputeFinalReport() : null;
-        }
-
-        public void RaiseWarningNow()
-        {
-            currentWarning = runtime.RaiseWarning();
-        }
-
-        public void EscalateNow()
-        {
-            currentCritical = runtime.EscalateToCritical();
-        }
-
-        public void RespondToWarning(PlayerResponseType response)
-        {
-            warningResponded = true;
-            Respond(NotificationLevel.Warning, response);
-        }
-
-        public void RespondToCritical(PlayerResponseType response)
-        {
-            criticalResponded = true;
-            Respond(NotificationLevel.Critical, response);
-        }
-
-        private void Respond(NotificationLevel level, PlayerResponseType response)
-        {
-            switch (response)
-            {
-                case PlayerResponseType.Act:
-                    dispatchResult = runtime.RecordActAndDispatch(level);
-                    break;
-                case PlayerResponseType.Acknowledge:
-                    runtime.RecordAcknowledge(level);
-                    break;
-                case PlayerResponseType.Ignore:
-                    runtime.RecordIgnore(level);
-                    break;
-            }
-        }
+        public void RespondToCritical(PlayerResponseType response) => session.RespondToCritical(response);
 
         private void OnGUI()
         {
-            if (runtime == null)
+            if (session == null)
             {
                 return;
             }
@@ -251,7 +88,7 @@ namespace CityAuthority.DebugUI
 
         private void DrawWindow(int id)
         {
-            var incident = sliceConfig.EmergencyScenario.Incident;
+            var incident = session.Config.EmergencyScenario.Incident;
 
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Save"))
@@ -267,7 +104,7 @@ namespace CityAuthority.DebugUI
             GUILayout.EndHorizontal();
             GUILayout.Space(6);
 
-            if (developmentCycle != null)
+            if (session.DevelopmentCycle != null)
             {
                 DrawDevelopmentListingSection();
                 GUILayout.Space(10);
@@ -276,7 +113,7 @@ namespace CityAuthority.DebugUI
             GUILayout.Label(incident.DisplayName, EditorBoldLabel());
             GUILayout.Space(4);
 
-            if (!runtime.WarningRaised)
+            if (!session.EmergencyRuntime.WarningRaised)
             {
                 if (GUILayout.Button("Raise Warning"))
                 {
@@ -285,8 +122,8 @@ namespace CityAuthority.DebugUI
             }
             else
             {
-                GUILayout.Label("[Warning] " + currentWarning.Message);
-                if (!warningResponded)
+                GUILayout.Label("[Warning] " + session.CurrentWarning.Message);
+                if (!session.WarningResponded)
                 {
                     DrawResponseButtons(RespondToWarning);
                 }
@@ -298,21 +135,21 @@ namespace CityAuthority.DebugUI
 
             GUILayout.Space(6);
 
-            if (runtime.WarningRaised && !runtime.CriticalRaised)
+            if (session.EmergencyRuntime.WarningRaised && !session.EmergencyRuntime.CriticalRaised)
             {
                 if (GUILayout.Button("Escalate to Critical"))
                 {
                     EscalateNow();
                 }
             }
-            else if (runtime.CriticalRaised)
+            else if (session.EmergencyRuntime.CriticalRaised)
             {
-                GUILayout.Label("[Critical] " + currentCritical.Message);
-                if (runtime.HasDispatched)
+                GUILayout.Label("[Critical] " + session.CurrentCritical.Message);
+                if (session.EmergencyRuntime.HasDispatched)
                 {
                     GUILayout.Label("Already dispatched — no further response needed.");
                 }
-                else if (!criticalResponded)
+                else if (!session.CriticalResponded)
                 {
                     DrawResponseButtons(RespondToCritical);
                 }
@@ -323,50 +160,50 @@ namespace CityAuthority.DebugUI
             }
 
             GUILayout.Space(10);
-            GUILayout.Label("Fire uncommitted units: " + fireState.UncommittedUnitCount + " / " + fireState.TotalUnitCount);
+            GUILayout.Label("Fire uncommitted units: " + session.RespondingDepartmentState.UncommittedUnitCount + " / " + session.RespondingDepartmentState.TotalUnitCount);
 
-            foreach (var district in sliceConfig.EmergencyScenario.Districts)
+            foreach (var district in session.Config.EmergencyScenario.Districts)
             {
-                var coverage = CoverageResolver.ResolveDistrictCoverage(fireState, district, 0, sliceConfig.CitywideTravelTimeBands);
+                var coverage = CoverageResolver.ResolveDistrictCoverage(session.RespondingDepartmentState, district, 0, session.Config.CitywideTravelTimeBands);
                 GUILayout.Label(district.DisplayName + ": " + coverage);
             }
 
-            if (dispatchResult != null)
+            if (session.LastDispatchResult != null)
             {
                 GUILayout.Space(6);
-                GUILayout.Label("Dispatch: " + dispatchResult.TargetDistrictCoverage + " coverage, " + dispatchResult.SeverityMultiplier + "x severity");
-                foreach (var secondary in dispatchResult.SecondaryNotifications)
+                GUILayout.Label("Dispatch: " + session.LastDispatchResult.TargetDistrictCoverage + " coverage, " + session.LastDispatchResult.SeverityMultiplier + "x severity");
+                foreach (var secondary in session.LastDispatchResult.SecondaryNotifications)
                 {
                     GUILayout.Label("  [" + secondary.Level + "] " + secondary.Message);
                 }
             }
 
-            if (courtCase != null)
+            if (session.CourtCase != null)
             {
                 DrawCourtCaseSection();
             }
 
-            if (newspaper != null)
+            if (session.Newspaper != null)
             {
                 DrawNewspaperSection();
             }
 
-            if (criticalResponded)
+            if (session.CriticalResponded)
             {
                 DrawFinalReportSection();
             }
 
             GUILayout.Space(10);
             GUILayout.Label("By category: " +
-                "Ignored=" + cityLog.CountByCategory(AccountabilityCategory.IgnoredWarning) +
-                ", Acknowledged (unresolved)=" + cityLog.CountByCategory(AccountabilityCategory.AcknowledgedUnresolved) +
-                ", Actions completed=" + cityLog.CountByCategory(AccountabilityCategory.ActionCompleted));
+                "Ignored=" + session.CityLog.CountByCategory(AccountabilityCategory.IgnoredWarning) +
+                ", Acknowledged (unresolved)=" + session.CityLog.CountByCategory(AccountabilityCategory.AcknowledgedUnresolved) +
+                ", Actions completed=" + session.CityLog.CountByCategory(AccountabilityCategory.ActionCompleted));
 
             GUILayout.Space(6);
-            GUILayout.Label("City Log (" + cityLog.Events.Count + ")");
+            GUILayout.Label("City Log (" + session.CityLog.Events.Count + ")");
             logScroll = GUILayout.BeginScrollView(logScroll, GUILayout.Height(160));
             var sb = new StringBuilder();
-            foreach (var evt in cityLog.Events)
+            foreach (var evt in session.CityLog.Events)
             {
                 sb.Append('[').Append(evt.EventType);
                 if (evt.Category.HasValue)
@@ -383,7 +220,8 @@ namespace CityAuthority.DebugUI
 
         private void DrawDevelopmentListingSection()
         {
-            var listing = sliceConfig.DevelopmentListing;
+            var listing = session.Config.DevelopmentListing;
+            var developmentCycle = session.DevelopmentCycle;
 
             GUILayout.Label("Development Listing", EditorBoldLabel());
             GUILayout.Label(listing.DisplayName + " (" + listing.Zoning + ")");
@@ -421,18 +259,19 @@ namespace CityAuthority.DebugUI
 
         private void DrawCourtCaseSection()
         {
-            var courtCaseDefinition = sliceConfig.CourtCase;
+            var courtCaseDefinition = session.Config.CourtCase;
+            var courtCase = session.CourtCase;
 
             GUILayout.Space(10);
             GUILayout.Label("Court Case", EditorBoldLabel());
 
-            if (!runtime.CriticalRaised || !sliceConfig.EmergencyScenario.Incident.LifeSafetyRisk)
+            if (!session.EmergencyRuntime.CriticalRaised || !session.Config.EmergencyScenario.Incident.LifeSafetyRisk)
             {
                 GUILayout.Label("(No condemnation grounds yet.)");
                 return;
             }
 
-            if (!structureCondemned)
+            if (!session.StructureCondemned)
             {
                 if (GUILayout.Button("Condemn Structure & Open Court Case"))
                 {
@@ -468,10 +307,12 @@ namespace CityAuthority.DebugUI
 
         private void DrawNewspaperSection()
         {
-            GUILayout.Space(10);
-            GUILayout.Label(sliceConfig.Newspaper.DisplayName, EditorBoldLabel());
+            var newspaper = session.Newspaper;
 
-            if (criticalResponded && FindArticle("EmergencyResponse") == null)
+            GUILayout.Space(10);
+            GUILayout.Label(session.Config.Newspaper.DisplayName, EditorBoldLabel());
+
+            if (session.CriticalResponded && FindArticle("EmergencyResponse") == null)
             {
                 if (GUILayout.Button("Publish Emergency Response Story"))
                 {
@@ -479,7 +320,7 @@ namespace CityAuthority.DebugUI
                 }
             }
 
-            if (courtCase != null && courtCase.HasRuling && FindArticle("CourtRuling") == null)
+            if (session.CourtCase != null && session.CourtCase.HasRuling && FindArticle("CourtRuling") == null)
             {
                 if (GUILayout.Button("Publish Court Ruling Story"))
                 {
@@ -487,7 +328,7 @@ namespace CityAuthority.DebugUI
                 }
             }
 
-            if (developmentCycle != null && developmentCycle.WasRejected && FindArticle("DevelopmentRejection") == null)
+            if (session.DevelopmentCycle != null && session.DevelopmentCycle.WasRejected && FindArticle("DevelopmentRejection") == null)
             {
                 if (GUILayout.Button("Publish Development Rejection Story"))
                 {
@@ -508,6 +349,7 @@ namespace CityAuthority.DebugUI
             GUILayout.Space(10);
             GUILayout.Label("Final Report", EditorBoldLabel());
 
+            var finalReport = session.FinalReport;
             if (finalReport == null)
             {
                 if (GUILayout.Button("Generate Final Report"))
@@ -529,7 +371,7 @@ namespace CityAuthority.DebugUI
 
         private NewsArticle FindArticle(string sourceEventType)
         {
-            foreach (var article in newspaper.PublishedArticles)
+            foreach (var article in session.Newspaper.PublishedArticles)
             {
                 if (article.SourceEventType == sourceEventType)
                 {
