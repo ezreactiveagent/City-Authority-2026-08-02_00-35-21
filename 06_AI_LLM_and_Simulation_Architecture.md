@@ -233,6 +233,8 @@ Preliminary assessment:
 
 **Decision: Unity 6 with C# is the selected engine for City Authority.** Godot 4 C# remains the documented fallback rationale above in case Unity-specific constraints force a reconsideration, but implementation work should proceed on Unity 6.
 
+Formalized retroactively as [ADR 001](ADR_001_Unity_6_Engine_Choice.md).
+
 ## 14. Technical Design Requirements
 
 The architecture should support:

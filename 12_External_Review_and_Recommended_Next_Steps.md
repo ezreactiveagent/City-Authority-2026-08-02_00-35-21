@@ -1,0 +1,59 @@
+# 12 — External Review and Recommended Next Steps
+
+## 1. Purpose
+
+This report is different in kind from Reports 00–11: it is not a continuation of the one-question design interview, and it carries no design authority of its own. It is an external review pass (Claude, at Tegan's request) over Reports 00–11 and the current `Assets/` implementation, producing a set of open questions for Tegan and concrete recommended actions for whoever (human or agent) picks up implementation next.
+
+Nothing in this report should be treated as a settled design decision the way 00–11 are. Where it disagrees with or questions an existing report, that disagreement is flagged explicitly as a question, not silently resolved.
+
+## 2. Headline Assessment
+
+The slice-scoping discipline across Reports 08–11 is genuinely strong. Report 08's explicit "out of scope" list (§11), Report 09/10's "these are tunable, not final" framing, and Report 11's pragmatic tiering of the Definition of Done (v0/v1) are exactly the practices that keep a solo/AI-agent-led project from stalling on its own ambition. The engine/AI boundary in Report 06 (§2–§3: engine owns facts, LLM only interprets, validated restricted-outcome selection) is the single best piece of architecture in the design and it has survived intact into code — `JudicialRulingSelector.cs` implements the exact restricted-outcome pattern Report 06 describes, with the validation gate left in place even though it currently has nothing to reject.
+
+The code itself is legitimate: it cross-references design report sections in comments, the test suite (`Assets/Tests/Editor/`) asserts against the actual numeric defaults in Reports 09–10, and the save/load implementation (`ScenarioSaveService.cs`) restores state additively rather than replaying — which is the correct approach for the reproducibility requirement in `06 §9`. This is much further along than a docs-only proposal; treat the "Slice v1 complete" claim in `CLAUDE.md` as credible, subject to the verification step in Section 5 below.
+
+## 3. Open Questions for Tegan (do not resolve unilaterally)
+
+These need a human decision before Claude Code should act on them:
+
+1. **Is this the canonical repo?** `CLAUDE.md` describes a workflow of dated sandbox-session repo copies later merged into one canonical repo, and a caution about a stale second `City-Authority*` folder. The URL reviewed here (`City-Authority-2026-08-02_00-35-21`) carries a session-style timestamp. Before more work lands here: confirm this checkout is (or has been merged into) the canonical repo, and confirm push access is actually current from whatever environment does the next round of work.
+2. **Is the governance-simulation direction (Reports 00–11) the confirmed replacement for the earlier adjacency-placement/no-grid-performance thesis**, or are the two meant to coexist (e.g., governance-sim as the gameplay layer, adjacency placement as the presentation/building layer underneath it)? Right now `01 §9` ("Organic City Form") covers parcel/road generation only — it does not mention independently-placed buildings with procedural connective detail (fences, paths, walls) generated from adjacency reads. If that placement-level thesis is still wanted, it needs its own explicit section; if it's been superseded, that's fine, but worth saying so in writing somewhere so future sessions don't reintroduce it as if it were still live.
+3. **Does "performance as a hard per-feature constraint" still hold as a governing principle?** None of Reports 00–11 state an explicit performance budget or per-feature performance gate. This matters specifically because Report 04 (individual citizen simulation) is independently flagged in both `08 §11` and `11 §4` as "the single largest technical risk in the whole design" — and per-citizen simulation at city scale is the same failure mode that motivated moving away from conventional city-builder architecture in the first place. See Section 6 below for a concrete recommendation.
+4. **Steam Deck compatibility** — open in earlier scoping, not mentioned anywhere in 00–11. Worth either explicitly deferring in writing (add to `07 §3` Deferred Features) or resolving now while the engine choice (`06 §13`) is still fresh, since Unity's Deck support characteristics differ from Godot's and this is cheaper to settle before more platform-specific code accumulates.
+5. **Should the Unity engine decision be a formal ADR?** `06 §13` documents the decision in prose but not as a numbered, dated Architectural Decision Record. If ADR discipline is still the intended practice for major technical choices, this decision — arguably the single most consequential technical choice made since the last review — should get one, even if written retroactively.
+
+## 4. Per-File Notes
+
+Small, concrete items per file. None of these block current work; they're accuracy/consistency notes.
+
+- **00 — Project Index**: Add this report to the Reports list and Suggested Review Order once it's placed in the repo, per `CLAUDE.md`'s own rule that new top-level reports must be indexed.
+- **01 — Game Vision**: `§9 Organic City Form` — see Open Question 2. No other changes; §5's destruction thresholds and §6's Final Failure Report are correctly untouched by the slice and don't need action yet.
+- **02 — Land, Development, Housing**: No structural concerns. `§16` (media development as a proposal type) correctly stays decoupled from the slice's single fixed newspaper (`08 §8`) — confirm this decoupling is preserved when media development stops being out-of-scope.
+- **03 — Departments, Emergency, Courts**: Strongest systemic design in the set. One gap: the "Manager Recommendations" concept (`§7`, confidence + tradeoffs) and the causal-explainability pillar (`00`'s pillar 7 / `01 §6`) are related ideas — recommendation quality and after-the-fact explainability — but currently live in different reports with no shared vocabulary. Consider whether a future report should unify these into a single "Advisory/Explainability" system rather than leaving them as separate implicit concepts. This is the same idea as the "Planning Assistant" in the ChatGPT-authored philosophy document reviewed alongside this repo — worth an explicit reconciliation pass so the two documents converge on one vocabulary rather than drifting.
+- **04 — Citizens, Education, Employment**: See Section 6 — recommend a dedicated performance-and-scope sub-report before this one is implemented, not just before it's fully modeled.
+- **05 — Reputation, Media, Politics**: No structural concerns. Note for later: `§13` Accountability Record and `03 §6`'s ignored/acknowledged/acted-on distinction are the same underlying mechanism described twice — fine for now since Report 08's slice only needs one instance of it (the City Log), but if a future report expands the Accountability Record, cross-link rather than re-describe.
+- **06 — AI/LLM Architecture**: No structural concerns; this is the report to protect most carefully against scope drift. One addition worth making when LLM calls actually get turned on (post-slice): a latency/cost/failure-rate budget per AI-touching surface. The deterministic stubs in `11 §3` currently have zero latency and zero failure modes — flipping any of them to a real model call reintroduces both, and `06 §11`'s fallback behavior should be tested under induced failure before shipping the first real call, not assumed to work because it's designed to.
+- **07 — Open Decisions and Backlog**: Add two items to `§2`/`§4`: an explicit performance/scaling budget for citizen simulation (currently absent), and Steam Deck compatibility (currently absent). Both are cheap to write down now and expensive to discover as constraints later.
+- **08 — Vertical Slice Specification**: Complete and implemented; no changes needed. Recommend treating this report as historically frozen (numeric tuning aside) rather than reopened, per its own framing as "a build target, not a design document."
+- **09 — Service Coverage Model**: No changes; defaults are explicitly provisional and should stay that way until real playtesting data exists.
+- **10 — Vertical Slice Data Defaults**: No changes; same as above.
+- **11 — Vertical Slice Implementation Approach**: No changes. `§6` ("What Remains Unchanged") is the right anchor for scope-creep prevention going forward — worth explicitly re-reading before starting any new system work.
+
+## 5. Recommended Immediate Actions, In Order
+
+1. **Verify before trusting.** `CLAUDE.md` already documents two real landmines: the Unity Editor MCP bridge being bound to a fixed local path separate from whatever git worktree is being edited, and Play mode state surviving across sessions. Before treating "Slice v1 complete, all tests passing" as current fact, re-verify it against the actually-bound Editor checkout using the procedure `CLAUDE.md` already describes (copy changed files in, refresh, regenerate `.meta` files, copy back) rather than trusting a worktree-only test run.
+2. **Resolve Section 3's open questions with Tegan** before scoping any new report or system — in particular the canonical-repo question, since committing further work into the wrong checkout is expensive to unwind.
+3. **Treat the completed vertical slice as a human playtest checkpoint before further system work.** Nothing in 00–11 currently states this as a formal gate, but the situation calls for one: the slice is feature-complete and mechanically sound; whether it's actually *fun* to play is a judgment only a human playtest can make, and it should happen before investing further in citizen simulation, procedural generation, or additional departments. Recommend instituting this explicitly as a standing rule for future milestones too, not just this one.
+4. **Write the citizen-simulation performance/scope report (Section 6) before starting Report 04 implementation.** This is the highest-risk unresolved item in the whole design and the one place where getting the scaling approach wrong is expensive to reverse.
+5. **Decide the ADR question (Section 3, item 5)** and, if yes, retroactively formalize the Unity decision.
+
+## 6. Recommended New Report: Citizen Simulation Performance Budget
+
+Before Report 04 (Citizens, Education, Employment) moves from design to implementation, recommend a short dedicated report — call it Report 13 or fold into a rewritten 04 — that answers, before any citizen-simulation code is written:
+
+- **Update frequency tiers.** Not every citizen needs every calculation every tick. Define which attributes (location, risk, employment, satisfaction) update every tick, every N ticks, or only on-trigger (e.g., only recalculate risk when a nearby event fires), analogous to the LOD (level-of-detail) concept `11 §4`'s named-citizen carve-out gestures at but doesn't generalize.
+- **A concrete population ceiling** the first full implementation is designed against (e.g., "must remain smooth at N simulated citizens on target hardware"), even if provisional — Report 09/10's pattern of explicit, tunable-but-stated defaults is the right model to follow here too.
+- **What gets aggregated vs. simulated individually**, and the rule for promoting/demoting a citizen between the two (this is the generalized version of `11 §4`'s hand-authored named-citizen exception — the slice already proves the concept at n=5; Report 04 needs the rule for n=50,000).
+- **A stated performance gate**: a check the implementation must pass (frame time, memory, or similar) before Report 04 is considered done, the same way Report 08 §13 gave the vertical slice a checklist Definition of Done.
+
+This report should be written and reviewed *before* citizen-simulation code starts, not derived from whatever the first implementation attempt happens to produce — the same reasoning `08 §14` used to justify building the accountability log before the systems that depend on it.

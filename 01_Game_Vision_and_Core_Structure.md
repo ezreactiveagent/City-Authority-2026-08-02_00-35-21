@@ -133,6 +133,8 @@ Private development should generate realistic irregular layouts within city rule
 
 Public facilities such as fire stations remain directly placeable and can snap to roads.
 
+This section covers parcel and road generation only. A separate, still-wanted thesis — individual buildings placed from adjacency reads rather than a painted grid, with connective detail (fences, paths, walls) generated procedurally from those relationships — sits underneath this as the presentation/world-building layer and needs its own full specification; see [07 §5 item A](07_Open_Decisions_and_Expansion_Backlog.md#a-procedural-city-form-specification).
+
 ## 10. Development Quality
 
 Buildings and developments can have approximately **three to six quality levels**.

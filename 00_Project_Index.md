@@ -54,6 +54,14 @@ Fixes the remaining vertical-slice numeric gaps — developer interest penalty/r
 
 Amends how the slice gets built for a solo, casual-pace first pass: reframes the build order as a branching decision-flow graph feeding a shared accountability log, defers LLM calls in favor of the deterministic template fallbacks already described in Report 06, reopens a narrow hand-authored named-citizen set, and splits the Definition of Done into a first-pass tier and a deferred save/load-reproducibility tier.
 
+### [12 — External Review and Recommended Next Steps](12_External_Review_and_Recommended_Next_Steps.md)
+
+An external review pass over Reports 00–11 and the current implementation, carrying no design authority of its own. Assesses the slice-scoping discipline and the engine/AI boundary as sound, raises open questions for Tegan to resolve (canonical-repo status, whether the governance-sim direction supersedes the earlier adjacency-placement thesis, whether performance is a governing constraint, Steam Deck support, ADR discipline), and recommends a dedicated citizen-simulation performance-budget report before Report 04 moves to implementation.
+
+## Architectural Decision Records
+
+- [ADR 001 — Unity 6 Engine Choice](ADR_001_Unity_6_Engine_Choice.md): formalizes the engine decision made in [06 §13](06_AI_LLM_and_Simulation_Architecture.md#13-preliminary-engine-direction), recorded retroactively per Tegan's request (2026-08-03).
+
 ## Current Design Pillars
 
 1. **The player manages rather than directly controls everything.**
@@ -77,3 +85,4 @@ For targeted development:
 - Start with **Report 08** to see what should actually get built first.
 - Start with **Report 10** for the concrete numbers and data needed to begin Report 08's build order.
 - Start with **Report 11** for how to actually sequence and build the slice as a solo, casual-pace first pass.
+- Start with **Report 12** for an outside audit of the design set and implementation, and the open questions it raises before any new report work begins.

@@ -158,6 +158,10 @@ Define:
 - Development footprints
 - Terrain handling
 - Redevelopment
+- Building-level adjacency placement (individual buildings positioned from what's already adjacent to them, rather than a painted zoning grid)
+- Procedurally generated connective detail (fences, paths, walls) derived from those adjacency reads
+
+**Confirmed still wanted (Tegan, 2026-08-03), per [12 §3 item 2](12_External_Review_and_Recommended_Next_Steps.md#3-open-questions-for-tegan-do-not-resolve-unilaterally): this is a presentation/world-building layer underneath the governance-simulation gameplay in Reports 00–11, not a replacement for it. It predates this report set and is not yet written up anywhere else in the repo — needs its own full pass before implementation, distinct from and in addition to the organic-parcel-generation content already in [01 §9](01_Game_Vision_and_Core_Structure.md#9-organic-city-form).**
 
 ### B. Department Roster and Capacity Model
 
