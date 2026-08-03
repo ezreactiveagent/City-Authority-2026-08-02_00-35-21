@@ -10,10 +10,12 @@ namespace CityAuthority.Data
         [SerializeField] private MayorPersonality mayor;
         [SerializeField] private List<DepartmentDefinition> departments = new();
         [SerializeField] private TravelTimeBandsConfig citywideTravelTimeBands;
+        [SerializeField] private EmergencyScenarioConfig emergencyScenario;
 
         public RegionPreset Region => region;
         public MayorPersonality Mayor => mayor;
         public IReadOnlyList<DepartmentDefinition> Departments => departments;
         public TravelTimeBandsConfig CitywideTravelTimeBands => citywideTravelTimeBands;
+        public EmergencyScenarioConfig EmergencyScenario => emergencyScenario;
     }
 }

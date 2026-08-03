@@ -18,6 +18,19 @@ namespace CityAuthority.Data
         public string Notes => notes;
     }
 
+    // 10 §4: "home coverage spans both the incident's location and one adjacent
+    // district within the Reduced band" — the base (uncommitted, no concurrent
+    // demand) travel time from this department's facility to a given district.
+    [Serializable]
+    public sealed class DistrictCoverage
+    {
+        [SerializeField] private District district;
+        [Min(0)] [SerializeField] private float baseTravelTimeMinutes;
+
+        public District District => district;
+        public float BaseTravelTimeMinutes => baseTravelTimeMinutes;
+    }
+
     [CreateAssetMenu(fileName = "Department_", menuName = "City Authority/Data/Department Definition")]
     public sealed class DepartmentDefinition : ScriptableObject
     {
@@ -27,6 +40,7 @@ namespace CityAuthority.Data
         [Min(1)] [SerializeField] private int startingFacilityCount = 1;
         [SerializeField] private OperatingPolicyLevel operatingPolicy = OperatingPolicyLevel.Standard;
         [SerializeField] private List<DepartmentResourceDefinition> resources = new();
+        [SerializeField] private List<DistrictCoverage> coverageAreas = new();
         [TextArea] [SerializeField] private string roleDescription;
 
         public DepartmentType DepartmentType => departmentType;
@@ -35,6 +49,7 @@ namespace CityAuthority.Data
         public int StartingFacilityCount => startingFacilityCount;
         public OperatingPolicyLevel OperatingPolicy => operatingPolicy;
         public IReadOnlyList<DepartmentResourceDefinition> Resources => resources;
+        public IReadOnlyList<DistrictCoverage> CoverageAreas => coverageAreas;
         public string RoleDescription => roleDescription;
     }
 }

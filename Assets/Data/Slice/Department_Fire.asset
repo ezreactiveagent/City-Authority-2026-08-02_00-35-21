@@ -22,6 +22,11 @@ MonoBehaviour:
     displayName: Engine Crew
     count: 1
     notes: 
+  coverageAreas:
+  - district: {fileID: 11400000, guid: a5758610be8384040acbfc1ed131ba30, type: 2}
+    baseTravelTimeMinutes: 4
+  - district: {fileID: 11400000, guid: 4c675f325bb2548798e34dd837d8d377, type: 2}
+    baseTravelTimeMinutes: 8
   roleDescription: Responds to the scripted emergency. Its home coverage spans both
     the incident's location and one adjacent district within the Reduced band; dispatching
     it to the incident drops the adjacent district's coverage (09 SS7).

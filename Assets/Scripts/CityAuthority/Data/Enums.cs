@@ -41,4 +41,36 @@ namespace CityAuthority.Data
         CourtRulingSplit,
         CourtRulingUpheld
     }
+
+    // 09 §3-4, 03 §14
+    public enum CoverageState
+    {
+        Adequate,
+        Reduced,
+        Uncovered
+    }
+
+    // 03 §13
+    public enum UnitCommitmentState
+    {
+        Uncommitted,
+        CommittedReassignable,
+        CommittedUnavailable
+    }
+
+    // 03 §5
+    public enum NotificationLevel
+    {
+        Informational,
+        Warning,
+        Critical
+    }
+
+    // 03 §6
+    public enum PlayerResponseType
+    {
+        Act,
+        Acknowledge,
+        Ignore
+    }
 }

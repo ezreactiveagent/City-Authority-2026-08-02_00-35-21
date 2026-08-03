@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f23bc57666f2b4e1ebea940af6d6f9da, type: 3}
+  m_Name: EmergencyScenario_Default
+  m_EditorClassIdentifier: Assembly-CSharp::CityAuthority.Data.EmergencyScenarioConfig
+  districts:
+  - {fileID: 11400000, guid: a5758610be8384040acbfc1ed131ba30, type: 2}
+  - {fileID: 11400000, guid: 4c675f325bb2548798e34dd837d8d377, type: 2}
+  incident: {fileID: 11400000, guid: c9ca901a76f5748909da938cddf276f8, type: 2}
