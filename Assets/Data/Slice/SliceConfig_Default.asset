@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8359559ca42d34766af7b7f1cf1ec3d2, type: 3}
+  m_Name: SliceConfig_Default
+  m_EditorClassIdentifier: Assembly-CSharp::CityAuthority.Data.SliceConfig
+  region: {fileID: 11400000, guid: 81d9df290098f47da8f0ea48667fed78, type: 2}
+  mayor: {fileID: 11400000, guid: 7ce536a04673e4e0cbe33b45c455ab66, type: 2}
+  departments:
+  - {fileID: 11400000, guid: f47dfe50b2ccb4d33a02b05d44383da5, type: 2}
+  - {fileID: 11400000, guid: 257b3d6dc7b7740dfb2f36e8753a8e01, type: 2}
+  - {fileID: 11400000, guid: 10d804ceb4b09498eac412a97d5fba82, type: 2}
+  - {fileID: 11400000, guid: 0e40992b9d12641ad94213f9a3ae7475, type: 2}
+  - {fileID: 11400000, guid: 1492fe0ac720f4c3b99e90388e0d5d29, type: 2}
+  citywideTravelTimeBands: {fileID: 11400000, guid: b0bc4d91348ae485187f6ac681240a90, type: 2}
