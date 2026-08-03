@@ -5,6 +5,7 @@ using CityAuthority.Data;
 using CityAuthority.Development;
 using CityAuthority.Emergency;
 using CityAuthority.Media;
+using CityAuthority.Report;
 using UnityEngine;
 
 namespace CityAuthority.DebugUI
@@ -27,6 +28,7 @@ namespace CityAuthority.DebugUI
         private bool structureCondemned;
         private DevelopmentProposalCycleRuntime developmentCycle;
         private NewspaperCoverageRuntime newspaper;
+        private AccountabilityReport finalReport;
         private Vector2 logScroll;
         private Rect windowRect = new(20, 20, 440, 860);
 
@@ -34,6 +36,7 @@ namespace CityAuthority.DebugUI
         public CourtRulingRecord LastRuling => courtCase?.Ruling;
         public DevelopmentProposalCycleRuntime DevelopmentCycle => developmentCycle;
         public NewspaperCoverageRuntime Newspaper => newspaper;
+        public AccountabilityReport FinalReport => finalReport;
         public System.Collections.Generic.IReadOnlyList<AccountabilityEvent> Events => cityLog?.Events;
 
         private void Awake()
@@ -115,6 +118,27 @@ namespace CityAuthority.DebugUI
         public CourtRulingRecord IssueRuling()
         {
             return courtCase.IssueRuling();
+        }
+
+        // 08 §10, 08 §13 item 7: assembled once, on demand, from the City Log
+        // plus whatever court ruling and newspaper coverage already exist —
+        // neither is required, since a scenario can end without the emergency
+        // ever escalating to condemnation or coverage.
+        public AccountabilityReport GenerateFinalReport()
+        {
+            if (finalReport != null)
+            {
+                return finalReport;
+            }
+
+            var incident = sliceConfig.EmergencyScenario.Incident;
+            var outcome = ScenarioOutcomeResolver.Resolve(incident, dispatchResult);
+            var ruling = courtCase?.Ruling;
+            var articles = newspaper?.PublishedArticles ?? System.Array.Empty<NewsArticle>();
+
+            finalReport = FinalReportGenerator.Generate(cityLog, outcome, ruling, articles);
+            cityLog.Record(new AccountabilityEvent("FinalReportGenerated", $"Scenario ended: {outcome}. {finalReport.Summary}"));
+            return finalReport;
         }
 
         public void RaiseWarningNow()
@@ -251,6 +275,11 @@ namespace CityAuthority.DebugUI
             if (newspaper != null)
             {
                 DrawNewspaperSection();
+            }
+
+            if (criticalResponded)
+            {
+                DrawFinalReportSection();
             }
 
             GUILayout.Space(10);
@@ -398,6 +427,30 @@ namespace CityAuthority.DebugUI
                 GUILayout.Label(article.Headline, EditorBoldLabel());
                 GUILayout.Label(article.Body, GUI.skin.box);
             }
+        }
+
+        private void DrawFinalReportSection()
+        {
+            GUILayout.Space(10);
+            GUILayout.Label("Final Report", EditorBoldLabel());
+
+            if (finalReport == null)
+            {
+                if (GUILayout.Button("Generate Final Report"))
+                {
+                    GenerateFinalReport();
+                }
+                return;
+            }
+
+            GUILayout.Label("Outcome: " + finalReport.Outcome, EditorBoldLabel());
+            GUILayout.Label(finalReport.Summary, GUI.skin.box);
+            GUILayout.Label("Warnings issued: " + finalReport.WarningsIssued.Count);
+            GUILayout.Label("Acknowledged (unresolved): " + finalReport.AcknowledgedUnresolved.Count);
+            GUILayout.Label("Ignored: " + finalReport.IgnoredWarnings.Count);
+            GUILayout.Label("Actions taken: " + finalReport.ActionsTaken.Count);
+            GUILayout.Label("Court ruling: " + (finalReport.CourtRuling != null ? finalReport.CourtRuling.SelectedOutcome.ToString() : "(none)"));
+            GUILayout.Label("Media coverage: " + finalReport.MediaCoverage.Count + " article(s)");
         }
 
         private NewsArticle FindArticle(string sourceEventType)

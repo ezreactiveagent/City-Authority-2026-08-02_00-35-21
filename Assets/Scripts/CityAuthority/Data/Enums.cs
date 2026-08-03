@@ -150,4 +150,12 @@ namespace CityAuthority.Data
         Medium,
         High
     }
+
+    // 08 §10: the slice's scenario-scoped pass/fail condition, tied to whether
+    // the one emergency's life-safety threat was contained.
+    public enum ScenarioResult
+    {
+        Success,
+        Failure
+    }
 }
