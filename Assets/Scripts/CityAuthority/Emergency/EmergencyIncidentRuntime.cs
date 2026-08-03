@@ -38,6 +38,31 @@ namespace CityAuthority.Emergency
         public bool HasDispatched => dispatchResult != null;
         public bool WarningRaised => warningRaised;
         public bool CriticalRaised => criticalRaised;
+        public DispatchResult DispatchResultIfAny => dispatchResult;
+
+        // Save/load (08 §13 item 8): reconstructs raised/dispatched state
+        // without re-raising notifications or re-dispatching — the City Log
+        // already carries the original events (restored separately via
+        // CityLog.FromEvents), and dispatchResult is stored/restored data,
+        // never recomputed.
+        public static EmergencyIncidentRuntime Restore(
+            EmergencyIncidentDefinition definition,
+            DepartmentCoverageState respondingDepartmentState,
+            IReadOnlyList<District> allDistricts,
+            TravelTimeBandsConfig bands,
+            IAccountabilityRecorder recorder,
+            bool warningRaised,
+            bool criticalRaised,
+            DispatchResult dispatchResult)
+        {
+            var runtime = new EmergencyIncidentRuntime(definition, respondingDepartmentState, allDistricts, bands, recorder)
+            {
+                warningRaised = warningRaised,
+                criticalRaised = criticalRaised,
+                dispatchResult = dispatchResult
+            };
+            return runtime;
+        }
 
         public Notification RaiseWarning()
         {

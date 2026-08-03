@@ -1,3 +1,4 @@
+using System.IO;
 using System.Text;
 using CityAuthority.Accountability;
 using CityAuthority.Court;
@@ -6,6 +7,7 @@ using CityAuthority.Development;
 using CityAuthority.Emergency;
 using CityAuthority.Media;
 using CityAuthority.Report;
+using CityAuthority.SaveLoad;
 using UnityEngine;
 
 namespace CityAuthority.DebugUI
@@ -131,14 +133,72 @@ namespace CityAuthority.DebugUI
                 return finalReport;
             }
 
+            finalReport = ComputeFinalReport();
+            cityLog.Record(new AccountabilityEvent("FinalReportGenerated", $"Scenario ended: {finalReport.Outcome}. {finalReport.Summary}"));
+            return finalReport;
+        }
+
+        // Split out so LoadScenario can recompute the report after a reload
+        // without appending a second "FinalReportGenerated" log entry — the
+        // restored log already carries the original one. Pure function of
+        // already-restored data, so recomputing is safe (06 §9 only forbids
+        // re-generating the court ruling itself, not this read of it).
+        private AccountabilityReport ComputeFinalReport()
+        {
             var incident = sliceConfig.EmergencyScenario.Incident;
             var outcome = ScenarioOutcomeResolver.Resolve(incident, dispatchResult);
             var ruling = courtCase?.Ruling;
             var articles = newspaper?.PublishedArticles ?? System.Array.Empty<NewsArticle>();
+            return FinalReportGenerator.Generate(cityLog, outcome, ruling, articles);
+        }
 
-            finalReport = FinalReportGenerator.Generate(cityLog, outcome, ruling, articles);
-            cityLog.Record(new AccountabilityEvent("FinalReportGenerated", $"Scenario ended: {outcome}. {finalReport.Summary}"));
-            return finalReport;
+        // 08 §13 item 8: writes the full scenario state to disk as JSON.
+        private static string SavePath => Path.Combine(Application.persistentDataPath, "scenario_save.json");
+
+        public bool HasSaveFile => SaveFileIO.Exists(SavePath);
+
+        public void SaveScenario()
+        {
+            var data = ScenarioSaveService.Capture(
+                cityLog, runtime, fireState, warningResponded, criticalResponded, structureCondemned,
+                courtCase, developmentCycle, newspaper, finalReport != null);
+            SaveFileIO.Save(SavePath, data);
+        }
+
+        // Restores every runtime instance from the save file rather than
+        // mutating the existing ones in place — the court ruling, published
+        // articles, and log entries all come back as stored data, never
+        // re-simulated (06 §9).
+        public void LoadScenario()
+        {
+            if (!SaveFileIO.Exists(SavePath))
+            {
+                return;
+            }
+
+            var data = SaveFileIO.Load(SavePath);
+            var restored = ScenarioSaveService.Restore(data, sliceConfig);
+
+            cityLog = restored.CityLog;
+            fireState = restored.RespondingDepartmentState;
+            runtime = restored.EmergencyRuntime;
+            warningResponded = restored.WarningResponded;
+            criticalResponded = restored.CriticalResponded;
+            structureCondemned = restored.StructureCondemned;
+            courtCase = restored.CourtCase;
+            developmentCycle = restored.DevelopmentCycle;
+            newspaper = restored.Newspaper;
+            dispatchResult = runtime.DispatchResultIfAny;
+
+            var incident = sliceConfig.EmergencyScenario.Incident;
+            currentWarning = runtime.WarningRaised
+                ? new Notification(NotificationLevel.Warning, incident.WarningMessage, incident.TargetDistrict)
+                : null;
+            currentCritical = runtime.CriticalRaised
+                ? new Notification(NotificationLevel.Critical, incident.CriticalMessage, incident.TargetDistrict)
+                : null;
+
+            finalReport = restored.FinalReportGenerated ? ComputeFinalReport() : null;
         }
 
         public void RaiseWarningNow()
@@ -192,6 +252,20 @@ namespace CityAuthority.DebugUI
         private void DrawWindow(int id)
         {
             var incident = sliceConfig.EmergencyScenario.Incident;
+
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Save"))
+            {
+                SaveScenario();
+            }
+            GUI.enabled = HasSaveFile;
+            if (GUILayout.Button("Load"))
+            {
+                LoadScenario();
+            }
+            GUI.enabled = true;
+            GUILayout.EndHorizontal();
+            GUILayout.Space(6);
 
             if (developmentCycle != null)
             {

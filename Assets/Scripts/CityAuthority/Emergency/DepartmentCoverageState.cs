@@ -1,4 +1,5 @@
 using CityAuthority.Data;
+using UnityEngine;
 
 namespace CityAuthority.Emergency
 {
@@ -53,6 +54,14 @@ namespace CityAuthority.Emergency
             {
                 committedUnitCount--;
             }
+        }
+
+        // Save/load (08 §13 item 8): restores commitment count directly rather
+        // than replaying CommitUnit() calls, since replaying isn't otherwise
+        // observable from stored state.
+        public void RestoreCommittedUnitCount(int count)
+        {
+            committedUnitCount = Mathf.Clamp(count, 0, TotalUnitCount);
         }
     }
 }

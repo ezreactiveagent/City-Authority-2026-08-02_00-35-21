@@ -64,6 +64,25 @@ namespace CityAuthority.Development
                 definition.District));
         }
 
+        // Save/load (08 §13 item 8): restores the resolved/unresolved state
+        // directly rather than replaying ApproveProposal/RejectBoth, since
+        // replaying would re-record City Log entries that already exist in
+        // the restored log.
+        public static DevelopmentProposalCycleRuntime Restore(
+            DevelopmentListingDefinition definition,
+            IAccountabilityRecorder recorder,
+            float developerInterest,
+            DevelopmentProposal approvedProposal,
+            bool rejected)
+        {
+            return new DevelopmentProposalCycleRuntime(definition, recorder)
+            {
+                developerInterest = developerInterest,
+                approvedProposal = approvedProposal,
+                rejected = rejected
+            };
+        }
+
         private bool Contains(DevelopmentProposal proposal)
         {
             foreach (var candidate in definition.Proposals)

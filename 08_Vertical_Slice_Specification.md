@@ -111,7 +111,7 @@ The slice is complete when a single playthrough can, without developer intervent
 7. Reach a pass/fail scenario end state and generate an accountability report covering all of the above.
 8. Reload a save made mid-scenario and confirm the court ruling and any other stored AI decisions do not change.
 
-**Item 8 is deferred to a second pass for the first working build; see [11 §5](11_Vertical_Slice_Implementation_Approach.md#5-definition-of-done-revised-amends-13).**
+**Item 8 was deferred to a second pass for the first working build (see [11 §5](11_Vertical_Slice_Implementation_Approach.md#5-definition-of-done-revised-amends-13)) and is now implemented — all eight items are complete. See `CLAUDE.md`'s "Current status" section.**
 
 ## 14. Suggested Build Order
 

@@ -31,6 +31,49 @@ namespace CityAuthority.Court
                 return ruling;
             }
 
+            ruling = JudicialRulingSelector.Rule(BuildFacts(definition));
+
+            recorder.Record(new AccountabilityEvent(
+                "CourtRulingIssued",
+                $"Judge {definition.AssignedJudge.JudgeName} ruled: {ruling.SelectedOutcome} — {ruling.Explanation}",
+                definition.TargetDistrict));
+
+            return ruling;
+        }
+
+        // Save/load (08 §13 item 8): the ruling itself (selected outcome,
+        // explanation, amounts, judge tag) is stored/restored data — this never
+        // calls JudicialRulingSelector again, per 06 §9's "never re-generate a
+        // potentially different one." Facts are rebuilt from the definition
+        // (design-time data, always available) rather than also being stored,
+        // since nothing in Facts is itself a decision.
+        public static CondemnationCaseRuntime Restore(
+            CondemnationCaseDefinition definition,
+            IAccountabilityRecorder recorder,
+            CourtOutcomeOption? selectedOutcome,
+            string explanation,
+            float cityAmount,
+            float ownerAmount,
+            JudgePersonalityTag judgePersonalityTag)
+        {
+            var runtime = new CondemnationCaseRuntime(definition, recorder);
+
+            if (selectedOutcome.HasValue)
+            {
+                runtime.ruling = new CourtRulingRecord(
+                    BuildFacts(definition),
+                    selectedOutcome.Value,
+                    explanation,
+                    cityAmount,
+                    ownerAmount,
+                    judgePersonalityTag);
+            }
+
+            return runtime;
+        }
+
+        private static CourtCaseFacts BuildFacts(CondemnationCaseDefinition definition)
+        {
             var claimantNames = new List<string>();
             foreach (var claimant in definition.Claimants)
             {
@@ -43,7 +86,7 @@ namespace CityAuthority.Court
                     ? definition.InitialAssignmentSplitIncrement
                     : null);
 
-            var facts = new CourtCaseFacts(
+            return new CourtCaseFacts(
                 definition.Id,
                 definition.TargetDistrict,
                 definition.AssessedValue,
@@ -51,15 +94,6 @@ namespace CityAuthority.Court
                 claimantNames,
                 definition.AssignedJudge.PersonalityTag,
                 CourtOutcomeCatalog.ValidOutcomesForCondemnationDispute);
-
-            ruling = JudicialRulingSelector.Rule(facts);
-
-            recorder.Record(new AccountabilityEvent(
-                "CourtRulingIssued",
-                $"Judge {definition.AssignedJudge.JudgeName} ruled: {ruling.SelectedOutcome} — {ruling.Explanation}",
-                definition.TargetDistrict));
-
-            return ruling;
         }
     }
 }

@@ -18,6 +18,19 @@ namespace CityAuthority.Accountability
             events.Add(accountabilityEvent);
         }
 
+        // Save/load (08 §13 item 8): reconstructs a log from previously recorded
+        // events without re-running whatever produced them — the events
+        // themselves are the stored record, per 06 §9.
+        public static CityLog FromEvents(IEnumerable<AccountabilityEvent> existingEvents)
+        {
+            var log = new CityLog();
+            foreach (var evt in existingEvents)
+            {
+                log.events.Add(evt);
+            }
+            return log;
+        }
+
         public IEnumerable<AccountabilityEvent> ByCategory(AccountabilityCategory category)
         {
             foreach (var evt in events)

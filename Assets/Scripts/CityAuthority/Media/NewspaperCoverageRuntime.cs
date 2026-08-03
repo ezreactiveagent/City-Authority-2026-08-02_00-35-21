@@ -65,6 +65,19 @@ namespace CityAuthority.Media
             return article;
         }
 
+        // Save/load (08 §13 item 8): restores previously published articles
+        // verbatim rather than regenerating them from templates, so headline/
+        // body text can't drift between a save and a reload.
+        public static NewspaperCoverageRuntime Restore(
+            NewspaperOutlet outlet,
+            IAccountabilityRecorder recorder,
+            IEnumerable<NewsArticle> existingArticles)
+        {
+            var runtime = new NewspaperCoverageRuntime(outlet, recorder);
+            runtime.published.AddRange(existingArticles);
+            return runtime;
+        }
+
         private void Publish(NewsArticle article)
         {
             published.Add(article);
