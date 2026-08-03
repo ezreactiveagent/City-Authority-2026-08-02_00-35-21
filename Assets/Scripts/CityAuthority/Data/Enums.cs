@@ -122,4 +122,32 @@ namespace CityAuthority.Data
         CityFriendly,
         UnpredictableWithinLimits
     }
+
+    // 02 §4: one of the differentiators between competing development proposals.
+    public enum DevelopmentDensity
+    {
+        Low,
+        Medium,
+        High
+    }
+
+    // 01 §11: proposed income/value bands a development can target.
+    public enum IncomeBand
+    {
+        Poverty,
+        NearPoverty,
+        LowIncome,
+        LowerMiddle,
+        Middle,
+        UpperMiddle,
+        UpperClass
+    }
+
+    // 02 §4: risk as a proposal differentiator.
+    public enum DevelopmentRisk
+    {
+        Low,
+        Medium,
+        High
+    }
 }

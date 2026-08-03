@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 75be08571f873453395002ccb995637c, type: 3}
+  m_Name: DevelopmentProposal_Highline
+  m_EditorClassIdentifier: Assembly-CSharp::CityAuthority.Data.DevelopmentProposal
+  id: highline-development-group
+  developerName: Highline Development Group
+  zoning: 1
+  density: 2
+  targetIncomeBand: 5
+  estimatedAnnualTaxRevenue: 140000
+  risk: 1
+  description: A high-density mixed-use development targeting upper-middle-income
+    residents. Highline Development Group projects significantly higher tax revenue
+    but requires greater infrastructure investment and carries more construction
+    and occupancy risk.

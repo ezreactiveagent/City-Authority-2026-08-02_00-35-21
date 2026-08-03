@@ -2,6 +2,7 @@ using System.Text;
 using CityAuthority.Accountability;
 using CityAuthority.Court;
 using CityAuthority.Data;
+using CityAuthority.Development;
 using CityAuthority.Emergency;
 using UnityEngine;
 
@@ -23,11 +24,13 @@ namespace CityAuthority.DebugUI
         private DispatchResult dispatchResult;
         private CondemnationCaseRuntime courtCase;
         private bool structureCondemned;
+        private DevelopmentProposalCycleRuntime developmentCycle;
         private Vector2 logScroll;
-        private Rect windowRect = new(20, 20, 440, 700);
+        private Rect windowRect = new(20, 20, 440, 780);
 
         public DispatchResult LastDispatchResult => dispatchResult;
         public CourtRulingRecord LastRuling => courtCase?.Ruling;
+        public DevelopmentProposalCycleRuntime DevelopmentCycle => developmentCycle;
         public System.Collections.Generic.IReadOnlyList<AccountabilityEvent> Events => cityLog?.Events;
 
         private void Awake()
@@ -53,6 +56,21 @@ namespace CityAuthority.DebugUI
             {
                 courtCase = new CondemnationCaseRuntime(sliceConfig.CourtCase, cityLog);
             }
+
+            if (sliceConfig.DevelopmentListing != null)
+            {
+                developmentCycle = new DevelopmentProposalCycleRuntime(sliceConfig.DevelopmentListing, cityLog);
+            }
+        }
+
+        public void ApproveDevelopmentProposal(DevelopmentProposal proposal)
+        {
+            developmentCycle.ApproveProposal(proposal);
+        }
+
+        public void RejectDevelopmentProposals()
+        {
+            developmentCycle.RejectBoth();
         }
 
         // 02 §13: the Emergency Commander condemns the structure once the
@@ -127,6 +145,12 @@ namespace CityAuthority.DebugUI
         private void DrawWindow(int id)
         {
             var incident = sliceConfig.EmergencyScenario.Incident;
+
+            if (developmentCycle != null)
+            {
+                DrawDevelopmentListingSection();
+                GUILayout.Space(10);
+            }
 
             GUILayout.Label(incident.DisplayName, EditorBoldLabel());
             GUILayout.Space(4);
@@ -224,6 +248,44 @@ namespace CityAuthority.DebugUI
             GUILayout.EndScrollView();
 
             GUI.DragWindow();
+        }
+
+        private void DrawDevelopmentListingSection()
+        {
+            var listing = sliceConfig.DevelopmentListing;
+
+            GUILayout.Label("Development Listing", EditorBoldLabel());
+            GUILayout.Label(listing.DisplayName + " (" + listing.Zoning + ")");
+
+            if (!developmentCycle.IsResolved)
+            {
+                foreach (var proposal in listing.Proposals)
+                {
+                    GUILayout.Label(
+                        proposal.DeveloperName + " — " + proposal.Density + " density, " +
+                        proposal.TargetIncomeBand + " income, $" + proposal.EstimatedAnnualTaxRevenue.ToString("N0") +
+                        "/yr tax, " + proposal.Risk + " risk");
+                    GUILayout.Label(proposal.Description, GUI.skin.box);
+                    if (GUILayout.Button("Approve " + proposal.DeveloperName))
+                    {
+                        ApproveDevelopmentProposal(proposal);
+                    }
+                    GUILayout.Space(4);
+                }
+
+                if (GUILayout.Button("Reject Both Proposals"))
+                {
+                    RejectDevelopmentProposals();
+                }
+            }
+            else if (developmentCycle.ApprovedProposal != null)
+            {
+                GUILayout.Label("Approved: " + developmentCycle.ApprovedProposal.DeveloperName + " (binding).");
+            }
+            else
+            {
+                GUILayout.Label("Rejected. Developer interest: " + developmentCycle.DeveloperInterestScore.ToString("N0") + " / 100");
+            }
         }
 
         private void DrawCourtCaseSection()

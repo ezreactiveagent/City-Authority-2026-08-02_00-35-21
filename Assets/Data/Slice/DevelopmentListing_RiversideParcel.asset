@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b358236a2c07e4d9497d30ef3d11c224, type: 3}
+  m_Name: DevelopmentListing_RiversideParcel
+  m_EditorClassIdentifier: Assembly-CSharp::CityAuthority.Data.DevelopmentListingDefinition
+  id: riverside-mixed-use-parcel
+  displayName: Riverside Mixed-Use Parcel
+  district: {fileID: 11400000, guid: 4c675f325bb2548798e34dd837d8d377, type: 2}
+  zoning: 1
+  proposals:
+  - {fileID: 11400000, guid: 39ca5b2201f77404289abb27746a6246, type: 2}
+  - {fileID: 11400000, guid: 82cf641d33b7348c2953037dfc25e25f, type: 2}

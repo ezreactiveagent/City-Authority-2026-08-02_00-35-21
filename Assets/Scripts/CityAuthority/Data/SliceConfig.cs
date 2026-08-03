@@ -12,6 +12,7 @@ namespace CityAuthority.Data
         [SerializeField] private TravelTimeBandsConfig citywideTravelTimeBands;
         [SerializeField] private EmergencyScenarioConfig emergencyScenario;
         [SerializeField] private CondemnationCaseDefinition courtCase;
+        [SerializeField] private DevelopmentListingDefinition developmentListing;
 
         public RegionPreset Region => region;
         public MayorPersonality Mayor => mayor;
@@ -19,5 +20,6 @@ namespace CityAuthority.Data
         public TravelTimeBandsConfig CitywideTravelTimeBands => citywideTravelTimeBands;
         public EmergencyScenarioConfig EmergencyScenario => emergencyScenario;
         public CondemnationCaseDefinition CourtCase => courtCase;
+        public DevelopmentListingDefinition DevelopmentListing => developmentListing;
     }
 }
