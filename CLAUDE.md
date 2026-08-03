@@ -4,7 +4,7 @@ Guidance for Claude Code when working in this repository.
 
 ## What this repo is
 
-City-Authority (CA) is a **design-documentation repo for an unbuilt game**, not a codebase. There is no source code, build system, or test suite yet — everything here is Markdown design reports. Do not assume any engine, framework, or file structure beyond what's described below; none has been committed to.
+City-Authority (CA) is now a **Unity 6 C# project** (this file lives at the project root, alongside `Assets/`, `Packages/`, `ProjectSettings/`) that also carries its own design documentation as the numbered Markdown reports below. The reports remain the source of truth for design intent; implementation of the vertical slice (Report 08) is underway — see "Current status" below for what exists in code.
 
 The game: a sandbox city-management simulation where the player is the **City Manager** (not an all-powerful mayor/planner), balancing department capacity, private development, emergencies, courts, media, and political oversight under a Mayor and City Council.
 
@@ -55,8 +55,23 @@ If asked to design or implement any AI-touching system, preserve this boundary �
 
 ## Current status / what to work on
 
-- **No code exists yet.** The project is pre-implementation.
-- **Engine: Unity 6 with C#**, decided (Report 06 §13). Godot 4 C# remains documented as the fallback rationale if Unity-specific constraints force a reconsideration, but implementation should target Unity 6.
-- The active build target is the **vertical slice** (Report 08) — the smallest playable loop that proves the core identity (capacity bottleneck → delayed consequence → accountability record → explainable outcome). Its suggested build order deliberately builds accountability logging (step 3) *before* the emergency/coverage system (step 2 is designed, but logging infra should land early) since every later system writes to it. Report 10 supplies the concrete numbers and data (department roster, region preset, developer interest, court penalty range) needed to actually start Step 1.
-- Full citizen-level simulation (Report 04), procedural parcel/road generation, and most numeric tuning in Report 07 §4 are explicitly deferred past the slice — don't scope-creep implementation work into them unless asked.
-- Repo work in this environment (`ezreactiveagent/City-Authority`) has historically been drafted in a sandboxed session without push access, then applied/pushed from a machine with GitHub Desktop credentials. Check push access before assuming a commit will reach `origin`.
+- **Engine: Unity 6 with C#**, decided (Report 06 §13). Godot 4 C# remains documented as the fallback rationale if Unity-specific constraints force a reconsideration, but implementation targets Unity 6.
+- The active build target is the **vertical slice** (Report 08), built per its suggested build order (08 §14, amended by 11 §2-§3). **Steps 1–6 are implemented and pushed to `main`; only Step 7 remains** to complete Slice v0 (11 §5).
+
+  | Step | System | Code |
+  |---|---|---|
+  | 1 | Fixed region + department data | `Assets/Scripts/CityAuthority/Data/` (RegionPreset, DepartmentDefinition, MayorPersonality, District, SliceConfig, …) |
+  | 2 | Scripted emergency + coverage model | `Assets/Scripts/CityAuthority/Emergency/` (CoverageResolver, EmergencyIncidentRuntime, DepartmentCoverageState, ResponseTimePenalty) |
+  | 3 | Accountability logging | `Assets/Scripts/CityAuthority/Accountability/` (CityLog, AccountabilityEvent, IAccountabilityRecorder) — the shared log every later system writes into |
+  | 4 | Court case + restricted-outcome AI pattern | `Assets/Scripts/CityAuthority/Court/` (CourtOutcomeCatalog, JudicialRulingSelector, CondemnationCaseRuntime) — deterministic stub standing in for a future LLM call, per 11 §3 |
+  | 5 | Development listing + proposal cycle | `Assets/Scripts/CityAuthority/Development/` (DeveloperInterest, DevelopmentProposalCycleRuntime) |
+  | 6 | Newspaper coverage | `Assets/Scripts/CityAuthority/Media/` (NewsArticleGenerator, NewspaperCoverageRuntime) |
+
+  All six are wired together in `Assets/Data/Slice/SliceConfig_Default.asset` and drivable by hand via the bare-bones `EmergencyDebugPanel` (`Assets/Scripts/CityAuthority/DebugUI/`), attached to a GameObject in `Assets/Scenes/SampleScene.unity` — press Play and use its buttons to walk the whole scenario (emergency → condemnation → ruling → development decision → newspaper). Each step has EditMode tests under `Assets/Tests/Editor/`.
+
+  **Step 7 — final report generation** (08 §10, assembled from the Step 3 City Log) is next: a scenario-scoped pass/fail condition tied to the one emergency, plus an end-of-scenario report covering warnings issued, acknowledgments, actions taken, the court ruling, and media coverage (categories from the eventual Final Failure Report, 01 §6). Save/load reproducibility (08 §13 item 8) is deferred to slice v1 per 11 §5 and is *not* part of Step 7.
+
+- Full citizen-level simulation (Report 04) beyond the 11 §4 named-citizen carve-out (already used for the court case's claimants — `Assets/Scripts/CityAuthority/Data/Citizen.cs`), procedural parcel/road generation, and most numeric tuning in Report 07 §4 remain explicitly deferred — don't scope-creep implementation work into them unless asked.
+- A known Unity/MCP quirk: `AssetDatabase.SaveAssets()` (the global save) reliably trips a false-positive "immutable package asset altered" warning that blocks the MCP bridge. Use `AssetDatabase.SaveAssetIfDirty(obj)` per-object instead when authoring `.asset` instances via script.
+- This repo previously existed as a docs-only folder separate from the Unity project; the two were merged (docs committed on top of the Unity scaffold) and the Unity project folder is now the single canonical repo. If you ever find a second `City-Authority*` folder with just the numbered reports and no `Assets/`, it's a stale leftover — don't use it.
+- Repo work in this environment has historically been drafted in a sandboxed session without push access, then applied/pushed from a machine with GitHub Desktop credentials — but push access has been confirmed working directly from this environment for Steps 1-6. Check push access before assuming a commit will reach `origin` if that stops being true.
